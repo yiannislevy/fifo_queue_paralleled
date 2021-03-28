@@ -34,6 +34,18 @@ typedef struct {
   pthread_cond_t *notFull, *notEmpty;
 } queue;
 
+//New fifo items
+struct workFunction {
+  void * (*work)(void *);
+  void * arg;
+};
+
+//void func to be used from struct.work
+void * print() 
+{
+  printf("Ειμαι ο Γιωτο!\n");
+}
+
 queue *queueInit (void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, int in);
@@ -42,6 +54,7 @@ void queueDel (queue *q, int *out);
 int main ()
 {
   queue *fifo;
+  // struct workFunction *fifo; //mine
   pthread_t pro, con;
 
   fifo = queueInit ();
@@ -66,6 +79,13 @@ void *producer (void *q)
   fifo = (queue *)q;
 
   for (i = 0; i < LOOP; i++) {
+    //mine-------
+    struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
+    _func->work = (void *)print();
+    _func->arg = malloc(sizeof(int));
+    //--------mine
+
+
     pthread_mutex_lock (fifo->mut);
     while (fifo->full) {
       printf ("producer: queue FULL.\n");
