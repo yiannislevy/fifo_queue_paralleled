@@ -41,15 +41,15 @@ struct workFunction {
 };
 
 //void func to be used from struct.work
-void * print() 
+void * print(int arg) 
 {
-  printf("Ειμαι ο Γιωτο!\n");
+  printf("Ειμαι ο Γιωτο no.%d!\n", arg);
 }
 
 queue *queueInit (void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, int in);
-void queueDel (queue *q, int *out);
+void queueDel (queue *q, struct workFunction *out);
 
 int main ()
 {
@@ -81,7 +81,7 @@ void *producer (void *q)
   for (i = 0; i < LOOP; i++) {
     //mine-------
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _func->work = (void *)print();
+    _func->work = (void *)print;
     _func->arg = malloc(sizeof(int));
     //--------mine
 
@@ -118,6 +118,7 @@ void *consumer (void *q)
   fifo = (queue *)q;
 
   for (i = 0; i < LOOP; i++) {
+    
     pthread_mutex_lock (fifo->mut);
     while (fifo->empty) {
       printf ("consumer: queue EMPTY.\n");
@@ -199,9 +200,9 @@ void queueAdd (queue *q, int in)
   return;
 }
 
-void queueDel (queue *q, int *out)
+void queueDel (queue *q, struct workFunction *out)
 {
-  *out = q->buf[q->head];
+  out = q->buf[q->head];
 
   q->head++;
   if (q->head == QUEUESIZE)
@@ -209,6 +210,8 @@ void queueDel (queue *q, int *out)
   if (q->head == q->tail)
     q->empty = 1;
   q->full = 0;
+
+  ((void(*)())out->work)(*(int*)out->arg);
 
   return;
 }
