@@ -49,7 +49,7 @@ void * print(int arg)
 queue *queueInit (void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, int in);
-void queueDel (queue *q, struct workFunction *out);
+void queueDel (queue *q, struct workFunction* out);
 
 int main ()
 {
@@ -81,7 +81,7 @@ void *producer (void *q)
   for (i = 0; i < LOOP; i++) {
     //mine-------
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _func->work = (void *)print;
+    _func->work = (void *)print(i);
     _func->arg = malloc(sizeof(int));
     //--------mine
 
@@ -113,7 +113,9 @@ void *producer (void *q)
 void *consumer (void *q)
 {
   queue *fifo;
-  int i, d;
+  int i;
+
+  struct workFunction *d;
 
   fifo = (queue *)q;
 
@@ -203,6 +205,7 @@ void queueAdd (queue *q, int in)
 void queueDel (queue *q, struct workFunction *out)
 {
   out = q->buf[q->head];
+  ((void(*)())out->work)(*(int *)out->arg);
 
   q->head++;
   if (q->head == QUEUESIZE)
@@ -211,7 +214,6 @@ void queueDel (queue *q, struct workFunction *out)
     q->empty = 1;
   q->full = 0;
 
-  ((void(*)())out->work)(*(int*)out->arg);
 
   return;
 }
