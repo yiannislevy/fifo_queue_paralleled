@@ -27,7 +27,7 @@ void *producer (void *args);
 void *consumer (void *args);
 
 typedef struct {
-  int buf[QUEUESIZE];
+  struct workFunction * buf[QUEUESIZE];
   long head, tail;
   int full, empty;
   pthread_mutex_t *mut;
@@ -41,9 +41,9 @@ struct workFunction {
 };
 
 //void func to be used from struct.work
-void * print() 
+void * print(int arg) 
 {
-  printf("Ειμαι ο Γιωτο no.%d!\n");
+  printf("Ειμαι ο Γιωτο no.%d!\n", arg);
 }
 
 queue *queueInit (void);
@@ -74,15 +74,14 @@ int main ()
 void *producer (void *q)
 {
   queue *fifo;
-  int i;
-
   fifo = (queue *)q;
 
-  for (i = 0; i < LOOP; i++) {
+  for (int i = 0; i < LOOP; i++) {
     //mine-------
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _func->work = (void *)print();
+    _func->work = (void *)print;
     _func->arg = malloc(sizeof(int));
+    // _func->arg = (int)i;
     //--------mine
 
 
@@ -91,7 +90,7 @@ void *producer (void *q)
       printf ("producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
     }
-    queueAdd (fifo, i);
+    queueAdd (fifo, _func);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
     // usleep (100000);
@@ -113,23 +112,21 @@ void *producer (void *q)
 void *consumer (void *q)
 {
   queue *fifo;
-  int i;
-
-  struct workFunction *d;
-
   fifo = (queue *)q;
 
-  for (i = 0; i < LOOP; i++) {
+  struct workFunction *d; 
+
+  for (int i = 0; i < LOOP; i++) {
     
     pthread_mutex_lock (fifo->mut);
     while (fifo->empty) {
       printf ("consumer: queue EMPTY.\n");
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
-    queueDel (fifo, &d);
+    queueDel (fifo, d);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
-    printf ("consumer: recieved %d.\n", d);
+    printf ("consumer: recieved %d.\n"); //TODO ΕΛΛΙΠΕΣ
     // usleep(200000);
   }
   // for (i = 0; i < LOOP; i++) {
@@ -191,18 +188,18 @@ void queueDelete (queue *q)
 
 void queueAdd (queue *q, struct workFunction* in ) //alazw
 {
-  q->buf[q->tail] = in;
+  q->buf[q->tail] = in; //TODO ΣΤΑΑΑΑΚ || θελει τυπεκαστ σε workdfunction! alla de xreiazetai vsk ((intptr_t))
   q->tail++;
   if (q->tail == QUEUESIZE)
     q->tail = 0;
   if (q->tail == q->head)
-    q->full = 1;
+    q->full = 1;  
   q->empty = 0;
 
   return;
 }
 
-void queueDel (queue *q, struct workFunction *out)
+void queueDel (queue *q, struct workFunction* out)
 {
   out = q->buf[q->head];
   ((void(*)())out->work)(*(int *)out->arg);
