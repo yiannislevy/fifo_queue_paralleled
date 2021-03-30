@@ -41,14 +41,14 @@ struct workFunction {
 };
 
 //void func to be used from struct.work
-void * print(int arg) 
+void * print() 
 {
-  printf("Ειμαι ο Γιωτο no.%d!\n", arg);
+  printf("Ειμαι ο Γιωτο no.%d!\n");
 }
 
 queue *queueInit (void);
 void queueDelete (queue *q);
-void queueAdd (queue *q, int in);
+void queueAdd (queue *q, struct workFunction* in);
 void queueDel (queue *q, struct workFunction* out);
 
 int main ()
@@ -81,7 +81,7 @@ void *producer (void *q)
   for (i = 0; i < LOOP; i++) {
     //mine-------
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _func->work = (void *)print(i);
+    _func->work = (void *)print();
     _func->arg = malloc(sizeof(int));
     //--------mine
 
@@ -189,7 +189,7 @@ void queueDelete (queue *q)
   free (q);
 }
 
-void queueAdd (queue *q, int in)
+void queueAdd (queue *q, struct workFunction* in ) //alazw
 {
   q->buf[q->tail] = in;
   q->tail++;
