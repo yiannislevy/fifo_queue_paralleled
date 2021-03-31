@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define QUEUESIZE 10
-#define PROD_WRK 20
+#define PROD_WRK 30
 #define num_p 8 //num_p(2,8)
 #define num_c 8 //num_c(2,8)
 
@@ -28,7 +28,7 @@ struct workFunction {
   void *arg; };
 
 //void func to be used from struct.work
-void *print(int arg) //TODO ALLAXE TO TI KANEI {
+void *print(int arg) { 
   // printf("Ειμαι ο Γιωτο no.%d!\n", arg); 
 }
 
@@ -107,7 +107,7 @@ void *consumer(void *q) {
     pthread_mutex_lock(fifo->mut);
     while (fifo->empty) {
       printf ("consumer: queue EMPTY.\n");
-      pthread_cond_wait(fifo->notEmpty, fifo->mut); //TODO mporw na kanw signal na fygei parolo pou einai akoma notempty.
+      pthread_cond_wait(fifo->notEmpty, fifo->mut);
       if (fifo->empty && prod_counter == num_p){ //Meaning: if the FIFO queue is empty AND all producers are done, then continue running the code.
         cons_counter++;
         pthread_mutex_unlock(fifo->mut);
