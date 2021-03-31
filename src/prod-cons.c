@@ -10,7 +10,7 @@
 
 int prod_counter = 0;
 int cons_counter = 0;
-
+//addition
 void *producer(void *args);
 void *consumer(void *args);
 
