@@ -1,20 +1,3 @@
-/*
- *	File	: pc.c
- *
- *	Title	: Demo Producer/Consumer.
- *
- *	Short	: A solution to the producer consumer problem using
- *		pthreads.	
- *
- *	Long 	:
- *
- *	Author	: Andrae Muys
- *
- *	Date	: 18 September 1997
- *
- *	Revised	:
- */
-
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -54,7 +37,6 @@ void queueDel (queue *q, struct workFunction* out);
 int main ()
 {
   queue *fifo;
-  // struct workFunction *fifo; //mine
   pthread_t pro, con;
 
   fifo = queueInit ();
@@ -81,7 +63,6 @@ void *producer (void *q)
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
     _func->work = (void *)print;
     _func->arg = malloc(sizeof(int));
-    // _func->arg = ((void*))(i);
     //--------mine
 
 
@@ -94,20 +75,7 @@ void *producer (void *q)
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
     printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
-
-    // usleep (100000);
   }
-  // for (i = 0; i < LOOP; i++) {
-  //   pthread_mutex_lock (fifo->mut);
-  //   while (fifo->full) {
-  //     printf ("producer: queue FULL.\n");
-  //     pthread_cond_wait (fifo->notFull, fifo->mut);
-  //   }
-  //   queueAdd (fifo, i);
-  //   pthread_mutex_unlock (fifo->mut);
-  //   pthread_cond_signal (fifo->notEmpty);
-  //   usleep (200000);
-  // }
   return (NULL);
 }
 
@@ -129,32 +97,9 @@ void *consumer (void *q)
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
     printf ("consumer: recieved %d.\n", i); //TODO ΕΛΛΙΠΕΣ
-    // usleep(200000);
   }
-  // for (i = 0; i < LOOP; i++) {
-  //   pthread_mutex_lock (fifo->mut);
-  //   while (fifo->empty) {
-  //     printf ("consumer: queue EMPTY.\n");
-  //     pthread_cond_wait (fifo->notEmpty, fifo->mut);
-  //   }
-  //   queueDel (fifo, &d);
-  //   pthread_mutex_unlock (fifo->mut);
-  //   pthread_cond_signal (fifo->notFull);
-  //   printf ("consumer: recieved %d.\n", d);
-  //   usleep (50000);
-  // }
   return (NULL);
 }
-
-/*
-  typedef struct {
-  int buf[QUEUESIZE];
-  long head, tail;
-  int full, empty;
-  pthread_mutex_t *mut;
-  pthread_cond_t *notFull, *notEmpty;
-  } queue;
-*/
 
 queue *queueInit (void)
 {
