@@ -43,7 +43,7 @@ struct workFunction {
 //void func to be used from struct.work
 void * print(int arg) 
 {
-  printf("Ειμαι ο Γιωτο no.%d!\n", arg);
+  // printf("Ειμαι ο Γιωτο no.%d!\n", arg);
 }
 
 queue *queueInit (void);
@@ -81,7 +81,7 @@ void *producer (void *q)
     struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
     _func->work = (void *)print;
     _func->arg = malloc(sizeof(int));
-    // _func->arg = (int)i;
+    // _func->arg = ((void*))(i);
     //--------mine
 
 
@@ -93,6 +93,8 @@ void *producer (void *q)
     queueAdd (fifo, _func);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
+    printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
+
     // usleep (100000);
   }
   // for (i = 0; i < LOOP; i++) {
@@ -126,7 +128,7 @@ void *consumer (void *q)
     queueDel (fifo, d);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
-    printf ("consumer: recieved %d.\n"); //TODO ΕΛΛΙΠΕΣ
+    printf ("consumer: recieved %d.\n", i); //TODO ΕΛΛΙΠΕΣ
     // usleep(200000);
   }
   // for (i = 0; i < LOOP; i++) {
