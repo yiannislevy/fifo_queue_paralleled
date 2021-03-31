@@ -5,6 +5,8 @@
 
 #define QUEUESIZE 10
 #define LOOP 20
+#define num_p 8 //num_p(2,8)
+#define num_c 8 //num_c(2,8)
 
 void *producer (void *args);
 void *consumer (void *args);
@@ -24,30 +26,37 @@ struct workFunction {
 };
 
 //void func to be used from struct.work
-void * print(int arg) 
+void * print(int arg) //TODO ALLAXE TO TI KANEI
 {
   // printf("Ειμαι ο Γιωτο no.%d!\n", arg);
 }
-
+//TODO ALLAXE REPO ONOMA SE EPETIT
 queue *queueInit (void);
 void queueDelete (queue *q);
 void queueAdd (queue *q, struct workFunction* in);
-void queueDel (queue *q, struct workFunction* out);
+void queueDel (queue *q);
 
 int main ()
 {
   queue *fifo;
-  pthread_t pro, con;
+  pthread_t* pro = (pthread_t *)malloc(sizeof(pthread_t) * num_p);
+  pthread_t* con = (pthread_t *)malloc(sizeof(pthread_t) * num_c);
 
   fifo = queueInit ();
   if (fifo ==  NULL) {
     fprintf (stderr, "main: Queue Init failed.\n");
     exit (1);
   }
-  pthread_create (&pro, NULL, producer, fifo);
-  pthread_create (&con, NULL, consumer, fifo);
-  pthread_join (pro, NULL);
-  pthread_join (con, NULL);
+  
+  for(int j = 0; j < num_p; j++)
+    pthread_create (&pro[j], NULL, producer, fifo);
+  for(int k = 0; k < num_c; k++)
+    pthread_create (&con[k], NULL, consumer, fifo);
+  
+  for(int j = 0; j < num_p; j++)
+    pthread_join (pro[j], NULL);
+  for(int k = 0; k < num_c; k++)
+    pthread_join (con[k], NULL);
   queueDelete (fifo);
 
   return 0;
@@ -59,19 +68,17 @@ void *producer (void *q)
   fifo = (queue *)q;
 
   for (int i = 0; i < LOOP; i++) {
-    //mine-------
-    struct workFunction * _func = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _func->work = (void *)print;
-    _func->arg = malloc(sizeof(int));
-    //--------mine
 
+    struct workFunction * _wrkF = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
+    _wrkF->work = (void *)print;
+    _wrkF->arg = malloc(sizeof(int));
 
     pthread_mutex_lock (fifo->mut);
     while (fifo->full) {
       printf ("producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
     }
-    queueAdd (fifo, _func);
+    queueAdd (fifo, _wrkF);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
     printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
@@ -84,8 +91,8 @@ void *consumer (void *q)
   queue *fifo;
   fifo = (queue *)q;
 
-  struct workFunction *d; 
-
+  // struct workFunction *d; 
+ //TODO while1
   for (int i = 0; i < LOOP; i++) {
     
     pthread_mutex_lock (fifo->mut);
@@ -93,7 +100,7 @@ void *consumer (void *q)
       printf ("consumer: queue EMPTY.\n");
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
-    queueDel (fifo, d);
+    queueDel (fifo);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
     printf ("consumer: recieved %d.\n", i); //TODO ΕΛΛΙΠΕΣ
@@ -135,7 +142,7 @@ void queueDelete (queue *q)
 
 void queueAdd (queue *q, struct workFunction* in ) //alazw
 {
-  q->buf[q->tail] = in; //TODO ΣΤΑΑΑΑΚ || θελει τυπεκαστ σε workdfunction! alla de xreiazetai vsk ((intptr_t))
+  q->buf[q->tail] = in;
   q->tail++;
   if (q->tail == QUEUESIZE)
     q->tail = 0;
@@ -146,10 +153,10 @@ void queueAdd (queue *q, struct workFunction* in ) //alazw
   return;
 }
 
-void queueDel (queue *q, struct workFunction* out)
+void queueDel (queue *q)
 {
-  out = q->buf[q->head];
-  ((void(*)())out->work)(*(int *)out->arg);
+  struct workFunction* out = q->buf[q->head];
+  ((void(*)())out->work)(*(int *)out->arg); //this is how it runs, thanks stack
 
   q->head++;
   if (q->head == QUEUESIZE)
@@ -157,7 +164,6 @@ void queueDel (queue *q, struct workFunction* out)
   if (q->head == q->tail)
     q->empty = 1;
   q->full = 0;
-
 
   return;
 }
