@@ -10,6 +10,11 @@
 
 int prod_counter = 0;
 int cons_counter = 0;
+int cntr = 0;
+
+struct timeval tmr;
+
+long int waitTimeSum = 0; //TODO
 //addition
 void *producer(void *args);
 void *consumer(void *args);
@@ -24,8 +29,11 @@ typedef struct {
 
 //New fifo items
 struct workFunction {
+  //εδω παιρνει τιμη double t0 kronos empala
+  double t0;
   void *(*work)(void *);
-  void *arg; };
+  void *arg;
+};
 
 //void func to be used from struct.work
 void *print(int arg) { 
@@ -70,6 +78,9 @@ int main() {
 
   queueDelete(fifo);
 
+  //printing sum
+  double avg = (double) waitTimeSum / (double)cntr;
+  printf("\n\nAverage runtime per thread: %ld", waitTimeSum);
   return 0;
 }
 
@@ -158,7 +169,12 @@ void queueDelete(queue *q) {
 }
 
 void queueAdd(queue *q, struct workFunction *in) {//alazw 
+  
   q->buf[q->tail] = in;
+
+  in->t0 = tmr.tv_sec * 1e6;
+  in->t0 = (in->t0 + tmr.tv_usec) * 1e-6;
+
   q->tail++;
   if (q->tail == QUEUESIZE)
     q->tail = 0;
@@ -171,7 +187,19 @@ void queueAdd(queue *q, struct workFunction *in) {//alazw
 
 void queueDel(queue *q) {
   struct workFunction *out = q->buf[q->head];
+
+  //------------------------------------------time
+  // gettimeofday (&t2, NULL);
+  double delTime = tmr.tv_sec * 1e6;
+  delTime = (delTime + tmr.tv_usec) * 1e-6; //pernw krno
+
+  double waitTime = delTime - out->t0;
+  waitTimeSum += waitTime; 
+  cntr++;
+  //time ------------------------------------------
+
   ((void (*)())out->work)(*(int *)out->arg); //this is how it runs, thanks stack
+
 
   q->head++;
   if (q->head == QUEUESIZE)
