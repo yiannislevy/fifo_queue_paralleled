@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #define QUEUESIZE 10
 #define PROD_WRK 30
@@ -14,8 +15,8 @@ int cntr = 0;
 
 struct timeval tmr;
 
-long int waitTimeSum = 0; //TODO
-//addition
+double waitTimeSum = 0;
+
 void *producer(void *args);
 void *consumer(void *args);
 
@@ -29,7 +30,6 @@ typedef struct {
 
 //New fifo items
 struct workFunction {
-  //εδω παιρνει τιμη double t0 kronos empala
   double t0;
   void *(*work)(void *);
   void *arg;
@@ -39,8 +39,6 @@ struct workFunction {
 void *print(int arg) { 
   // printf("Ειμαι ο Γιωτο no.%d!\n", arg); 
 }
-
-//TODO ALLAXE REPO ONOMA SE EPETIT
 
 queue *queueInit(void);
 void queueDelete(queue *q);
@@ -80,7 +78,7 @@ int main() {
 
   //printing sum
   double avg = (double) waitTimeSum / (double)cntr;
-  printf("\n\nAverage runtime per thread: %ld", waitTimeSum);
+  printf("\n\nAverage runtime per thread: %f", avg);
   return 0;
 }
 
@@ -96,16 +94,16 @@ void *producer(void *q) {
 
     pthread_mutex_lock(fifo->mut);
     while (fifo->full){
-      printf ("producer: queue FULL.\n");
+      // printf ("producer: queue FULL.\n");
       pthread_cond_wait(fifo->notFull, fifo->mut);
     }
     queueAdd(fifo, _wrkF);
     pthread_mutex_unlock(fifo->mut);
     pthread_cond_signal(fifo->notEmpty);
-    printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
+    // printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
   }
   prod_counter++;
-  printf("Bye bye from producer  no.%d\n", prod_counter);
+  // printf("Bye bye from producer  no.%d\n", prod_counter);
   
   return (NULL);
 }
@@ -117,12 +115,12 @@ void *consumer(void *q) {
   while (1) {
     pthread_mutex_lock(fifo->mut);
     while (fifo->empty) {
-      printf ("consumer: queue EMPTY.\n");
+      // printf ("consumer: queue EMPTY.\n");
       pthread_cond_wait(fifo->notEmpty, fifo->mut);
       if (fifo->empty && prod_counter == num_p){ //Meaning: if the FIFO queue is empty AND all producers are done, then continue running the code.
         cons_counter++;
         pthread_mutex_unlock(fifo->mut);
-        printf("Bye bye from consumer  no.%d\n", cons_counter);
+        // printf("Bye bye from consumer  no.%d\n", cons_counter);
 
         return (NULL);
       }
@@ -168,10 +166,11 @@ void queueDelete(queue *q) {
   free(q);
 }
 
-void queueAdd(queue *q, struct workFunction *in) {//alazw 
+void queueAdd(queue *q, struct workFunction *in) {
   
   q->buf[q->tail] = in;
 
+  gettimeofday (&tmr, NULL);
   in->t0 = tmr.tv_sec * 1e6;
   in->t0 = (in->t0 + tmr.tv_usec) * 1e-6;
 
@@ -189,12 +188,17 @@ void queueDel(queue *q) {
   struct workFunction *out = q->buf[q->head];
 
   //------------------------------------------time
-  // gettimeofday (&t2, NULL);
+  gettimeofday (&tmr, NULL);
   double delTime = tmr.tv_sec * 1e6;
   delTime = (delTime + tmr.tv_usec) * 1e-6; //pernw krno
+  // printf("%f\n", delTime);
 
   double waitTime = delTime - out->t0;
+  printf("%d)Wait time: %f\n",cntr, waitTime);
+
   waitTimeSum += waitTime; 
+  printf("Sum: %f\n\n", waitTimeSum);
+
   cntr++;
   //time ------------------------------------------
 
