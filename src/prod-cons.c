@@ -39,13 +39,13 @@ struct workFunction {
 
 //void func to be used from struct workFunction
 void * w_func(int arg) { //counter---arg
-  // int exp = 3; //Power of the number to calculate
-  // int result = 1;
-  // int base = (rand() % (100 - 1 + 1)) + 1; //Get a random number from 1-100
-  // while(exp != 0) { //Calculate its power
-  //   result *= base;
-  //   --exp;
-  // }
+  int exp = 3; //Power of the number to calculate
+  int result = 1;
+  int base = (rand() % (100 - 1 + 1)) + 1; //Get a random number from 1-100
+  while(exp != 0) { //Calculate its power
+    result *= base;
+    --exp;
+  }
   printf("Cycle no.%d completed!\n", arg);
 }
 
