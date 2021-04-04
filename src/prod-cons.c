@@ -5,17 +5,19 @@
 #include <sys/time.h>
 
 #define QUEUESIZE 10
-#define PROD_WRK 30
+#define PROD_WRK 20
 #define num_p 8 //num_p(2,8)
 #define num_c 8 //num_c(2,8)
 
 int prod_counter = 0;
 int cons_counter = 0;
-int cntr = 0;
+
+int cntr = 0; //Cycle counter
 
 struct timeval tmr;
-
 double waitTimeSum = 0;
+
+FILE * fp;
 
 void *producer(void *args);
 void *consumer(void *args);
@@ -30,14 +32,21 @@ typedef struct {
 
 //New fifo items
 struct workFunction {
-  double t0;
+  double t0; //Variable to measure time
   void *(*work)(void *);
   void *arg;
 };
 
-//void func to be used from struct.work
-void *print(int arg) { 
-  // printf("Ειμαι ο Γιωτο no.%d!\n", arg); 
+//void func to be used from struct workFunction
+void * w_func(int arg) { //counter---arg
+  // int exp = 3; //Power of the number to calculate
+  // int result = 1;
+  // int base = (rand() % (100 - 1 + 1)) + 1; //Get a random number from 1-100
+  // while(exp != 0) { //Calculate its power
+  //   result *= base;
+  //   --exp;
+  // }
+  printf("Cycle no.%d completed!\n", arg);
 }
 
 queue *queueInit(void);
@@ -55,6 +64,10 @@ int main() {
     fprintf(stderr, "main: Queue Init failed.\n");
     exit(1);
   }
+  //Creating file to save time data
+  char location[] = ""; //Change accordingly
+  fp = fopen(location, "w");
+  printf("Created file!\n");
 
   for (int j = 0; j < num_p; j++)
     pthread_create(&pro[j], NULL, producer, fifo);
@@ -67,18 +80,31 @@ int main() {
   //To check that producers are done, and thus the while(1) loop can end
   while (1) {
     pthread_cond_broadcast(fifo->notEmpty);
-    if (cons_counter == num_c)
-      printf("Broadcast is done all consumers are unblocked!");
-    break;
+    if (cons_counter == num_c){
+      printf("Broadcast is done, all consumers are unblocked!");
+      break;
+    }
   }
+
   for (int k = 0; k < num_c; k++)
     pthread_join(con[k], NULL);
 
   queueDelete(fifo);
 
-  //printing sum
-  double avg = (double) waitTimeSum / (double)cntr;
-  printf("\n\nAverage runtime per thread: %f", avg);
+  /*----------------Exporting info-----------------------*/
+  double avg = (double) waitTimeSum / (PROD_WRK *num_c);
+  fprintf(fp,"Total runtime: %f\n", waitTimeSum);
+  fprintf(fp,"Average runtime: %f\n", avg);
+  fprintf(fp,"Queue size: %d\n", QUEUESIZE);
+  fprintf(fp,"Work per producer: %d\n", PROD_WRK);
+  fprintf(fp,"Number of producer threads: %d\n", num_p);
+  fprintf(fp,"Number of consumer threads: %d\n", num_c);
+
+  fclose(fp);
+  /*-----------------------------------------------------*/
+
+  printf("\n\nAverage runtime per thread: %f\nTotal runtimes: %d", avg, cntr);
+
   return 0;
 }
 
@@ -88,9 +114,10 @@ void *producer(void *q) {
 
   for (int i = 0; i < PROD_WRK; i++){
 
-    struct workFunction *_wrkF = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_func". Typecasted to my created struct
-    _wrkF->work = (void *)print;
+    struct workFunction *_wrkF = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_wrkF". Typecasted to my created struct
+    _wrkF->work = (void *)w_func;
     _wrkF->arg = malloc(sizeof(int));
+    *((int*)_wrkF->arg) = ++cntr;
 
     pthread_mutex_lock(fifo->mut);
     while (fifo->full){
@@ -100,10 +127,8 @@ void *producer(void *q) {
     queueAdd(fifo, _wrkF);
     pthread_mutex_unlock(fifo->mut);
     pthread_cond_signal(fifo->notEmpty);
-    // printf ("producer: sent %d.\n", i); //TODO ΕΛΛΙΠΕΣ
   }
   prod_counter++;
-  // printf("Bye bye from producer  no.%d\n", prod_counter);
   
   return (NULL);
 }
@@ -120,8 +145,6 @@ void *consumer(void *q) {
       if (fifo->empty && prod_counter == num_p){ //Meaning: if the FIFO queue is empty AND all producers are done, then continue running the code.
         cons_counter++;
         pthread_mutex_unlock(fifo->mut);
-        // printf("Bye bye from consumer  no.%d\n", cons_counter);
-
         return (NULL);
       }
     }
@@ -130,7 +153,6 @@ void *consumer(void *q) {
     pthread_cond_signal(fifo->notFull);
   }
   cons_counter++;
-  printf("Bye bye from consumer  no.%d\n", cons_counter);
 
   return (NULL);
 }
@@ -170,9 +192,11 @@ void queueAdd(queue *q, struct workFunction *in) {
   
   q->buf[q->tail] = in;
 
+  /*-------------------------time--------------------------*/
   gettimeofday (&tmr, NULL);
   in->t0 = tmr.tv_sec * 1e6;
   in->t0 = (in->t0 + tmr.tv_usec) * 1e-6;
+  /*-------------------------------------------------------*/
 
   q->tail++;
   if (q->tail == QUEUESIZE)
@@ -187,23 +211,16 @@ void queueAdd(queue *q, struct workFunction *in) {
 void queueDel(queue *q) {
   struct workFunction *out = q->buf[q->head];
 
-  //------------------------------------------time
+  /*-------------------------time--------------------------*/
   gettimeofday (&tmr, NULL);
   double delTime = tmr.tv_sec * 1e6;
-  delTime = (delTime + tmr.tv_usec) * 1e-6; //pernw krno
-  // printf("%f\n", delTime);
-
+  delTime = (delTime + tmr.tv_usec) * 1e-6;
   double waitTime = delTime - out->t0;
-  printf("%d)Wait time: %f\n",cntr, waitTime);
-
+  fprintf(fp, "%f\n", waitTime); //Add every execution time
   waitTimeSum += waitTime; 
-  printf("Sum: %f\n\n", waitTimeSum);
+  /*-------------------------------------------------------*/
 
-  cntr++;
-  //time ------------------------------------------
-
-  ((void (*)())out->work)(*(int *)out->arg); //this is how it runs, thanks stack
-
+  ((void (*)())out->work)(*(int *)out->arg);
 
   q->head++;
   if (q->head == QUEUESIZE)
@@ -212,7 +229,7 @@ void queueDel(queue *q) {
     q->empty = 1;
   q->full = 0;
   
-  free(out); //Freeing some memory
+  free(out); //Freeing memory
   
   return;
 }
