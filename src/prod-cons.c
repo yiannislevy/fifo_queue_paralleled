@@ -6,6 +6,7 @@
 
 #define QUEUESIZE 10
 #define PROD_WRK 30
+#define PROD_WRK 20
 #define num_p 8 //Number of producers to create
 #define num_c 8 //Number of consumers to create
 

@@ -1,2 +1,12 @@
-# Real Time Embedded Systems; Part 0
-First part is about a FIFO pipe in c, using p-threads to optimize the flow of a struct. The struct has a function and an arg of my choosing.
+# FIFO Queue Parallelized with POSIX Threads
+A FIFO pipe is implemented in c, using p-threads to optimize the flow of items. Multiple producers and consumers add and remove items from the queue.
+
+## Build
+```bash
+cd rtes
+make compile
+```
+## Run
+```bash
+make run
+```
