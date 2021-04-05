@@ -6,8 +6,8 @@
 
 #define QUEUESIZE 10
 #define PROD_WRK 20
-#define num_p 8 //num_p(2,8)
-#define num_c 8 //num_c(2,8)
+#define num_p 8 //Number of producers to create
+#define num_c 8 //Number of consumers to create
 
 int prod_counter = 0;
 int cons_counter = 0;
@@ -38,7 +38,7 @@ struct workFunction {
 };
 
 //void func to be used from struct workFunction
-void * w_func(int arg) { //counter---arg
+void * w_func(int arg) {
   int exp = 3; //Power of the number to calculate
   int result = 1;
   int base = (rand() % (100 - 1 + 1)) + 1; //Get a random number from 1-100
