@@ -37,7 +37,7 @@ struct workFunction {
   void *(*work)(void *);
   void *arg;
 };
-
+ 
 //void func to be used from struct workFunction
 void * w_func(int arg) {
   int exp = 3; //Power of the number to calculate
