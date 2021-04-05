@@ -5,9 +5,9 @@
 #include <sys/time.h>
 
 #define QUEUESIZE 10
-#define PROD_WRK 20
-#define num_p 8 //num_p(2,8)
-#define num_c 8 //num_c(2,8)
+#define PROD_WRK 30
+#define num_p 8 //Number of producers to create
+#define num_c 8 //Number of consumers to create
 
 int prod_counter = 0;
 int cons_counter = 0;
@@ -38,7 +38,7 @@ struct workFunction {
 };
 
 //void func to be used from struct workFunction
-void * w_func(int arg) { //counter---arg
+void * w_func(int arg) {
   int exp = 3; //Power of the number to calculate
   int result = 1;
   int base = (rand() % (100 - 1 + 1)) + 1; //Get a random number from 1-100
@@ -69,10 +69,12 @@ int main() {
   fp = fopen(location, "w");
   printf("Created file!\n");
 
-  for (int j = 0; j < num_p; j++)
+  for (int j = 0; j < num_p; j++){
     pthread_create(&pro[j], NULL, producer, fifo);
-  for (int k = 0; k < num_c; k++)
+    }
+  for (int k = 0; k < num_c; k++){
     pthread_create(&con[k], NULL, consumer, fifo);
+    }
 
   for (int j = 0; j < num_p; j++)
     pthread_join(pro[j], NULL);
@@ -117,13 +119,13 @@ void *producer(void *q) {
     struct workFunction *_wrkF = (struct workFunction *)malloc(sizeof(struct workFunction)); //creating a pointer object named "_wrkF". Typecasted to my created struct
     _wrkF->work = (void *)w_func;
     _wrkF->arg = malloc(sizeof(int));
-    *((int*)_wrkF->arg) = ++cntr;
 
     pthread_mutex_lock(fifo->mut);
     while (fifo->full){
       // printf ("producer: queue FULL.\n");
       pthread_cond_wait(fifo->notFull, fifo->mut);
     }
+    *((int*)_wrkF->arg) = ++cntr;
     queueAdd(fifo, _wrkF);
     pthread_mutex_unlock(fifo->mut);
     pthread_cond_signal(fifo->notEmpty);
