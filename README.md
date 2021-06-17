@@ -10,3 +10,6 @@ make compile
 ```bash
 make run
 ```
+# License & copyright
+
+© Yiannis Levy, Aristotle University of Thessaloniki, ECE
